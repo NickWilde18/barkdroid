@@ -1,4 +1,4 @@
-package handler
+package push
 
 import (
 	"log"
@@ -10,41 +10,37 @@ import (
 	"github.com/gogf/gf/v2/net/ghttp"
 )
 
-// Handler handles Bark-compatible HTTP requests.
-type Handler struct {
+// Controller handles Bark-compatible HTTP requests.
+type Controller struct {
 	store     store.Store
-	providers map[string]provider.Provider // provider name → implementation
+	providers map[string]provider.Provider
 }
 
-// New creates a Handler.
-func New(st store.Store, providers map[string]provider.Provider) *Handler {
-	return &Handler{
+// New creates a Controller.
+func New(st store.Store, providers map[string]provider.Provider) *Controller {
+	return &Controller{
 		store:     st,
 		providers: providers,
 	}
 }
 
-// PushBody handles GET /:key/:body
-// Compatible with: curl https://api.day.app/{key}/{body}
-func (h *Handler) PushBody(r *ghttp.Request) {
+func (c *Controller) PushBody(r *ghttp.Request) {
 	key := r.Get("key").String()
 	body := r.Get("body").String()
-	h.push(r, key, "", body, "")
+	c.push(r, key, "", body, "")
 }
 
 // PushTitleBody handles GET /:key/:title/:body
-// Compatible with: curl https://api.day.app/{key}/{title}/{body}
-func (h *Handler) PushTitleBody(r *ghttp.Request) {
+func (c *Controller) PushTitleBody(r *ghttp.Request) {
 	key := r.Get("key").String()
 	title := r.Get("title").String()
 	body := r.Get("body").String()
-	url := r.Get("url").String() // optional query param
-	h.push(r, key, title, body, url)
+	url := r.Get("url").String()
+	c.push(r, key, title, body, url)
 }
 
 // PushPost handles POST /push
-// JSON body: {"key": "...", "title": "...", "body": "...", "url": "..."}
-func (h *Handler) PushPost(r *ghttp.Request) {
+func (c *Controller) PushPost(r *ghttp.Request) {
 	var input model.PushInput
 	if err := r.Parse(&input); err != nil {
 		r.Response.WriteJsonExit(ghttp.DefaultHandlerResponse{
@@ -53,12 +49,11 @@ func (h *Handler) PushPost(r *ghttp.Request) {
 		})
 		return
 	}
-	h.push(r, input.Key, input.Title, input.Body, input.URL)
+	c.push(r, input.Key, input.Title, input.Body, input.URL)
 }
 
 // RegisterDevice handles POST /register
-// JSON body: {"platform": "android", "push_provider": "jpush", "registration_id": "..."}
-func (h *Handler) RegisterDevice(r *ghttp.Request) {
+func (c *Controller) RegisterDevice(r *ghttp.Request) {
 	var input model.RegisterInput
 	if err := r.Parse(&input); err != nil {
 		r.Response.WriteJsonExit(ghttp.DefaultHandlerResponse{
@@ -68,7 +63,7 @@ func (h *Handler) RegisterDevice(r *ghttp.Request) {
 		return
 	}
 
-	dev, err := h.store.RegisterDevice(input.Platform, input.PushProvider, input.RegistrationID)
+	dev, err := c.store.RegisterDevice(input.Platform, input.PushProvider, input.RegistrationID)
 	if err != nil {
 		log.Printf("[ERROR] register device: %v", err)
 		r.Response.WriteJsonExit(ghttp.DefaultHandlerResponse{
@@ -89,8 +84,7 @@ func (h *Handler) RegisterDevice(r *ghttp.Request) {
 	})
 }
 
-// push is the shared push logic for all Bark-compatible endpoints.
-func (h *Handler) push(r *ghttp.Request, key, title, body, url string) {
+func (c *Controller) push(r *ghttp.Request, key, title, body, url string) {
 	if key == "" || body == "" {
 		r.Response.WriteJsonExit(ghttp.DefaultHandlerResponse{
 			Code:    400,
@@ -99,8 +93,7 @@ func (h *Handler) push(r *ghttp.Request, key, title, body, url string) {
 		return
 	}
 
-	// Look up the device by its Bark-compatible key
-	dev, err := h.store.GetDeviceByKey(key)
+	dev, err := c.store.GetDeviceByKey(key)
 	if err != nil {
 		r.Response.WriteJsonExit(ghttp.DefaultHandlerResponse{
 			Code:    404,
@@ -109,8 +102,7 @@ func (h *Handler) push(r *ghttp.Request, key, title, body, url string) {
 		return
 	}
 
-	// Find the configured provider for this device
-	prov, ok := h.providers[dev.PushProvider]
+	prov, ok := c.providers[dev.PushProvider]
 	if !ok {
 		r.Response.WriteJsonExit(ghttp.DefaultHandlerResponse{
 			Code:    500,
@@ -119,7 +111,6 @@ func (h *Handler) push(r *ghttp.Request, key, title, body, url string) {
 		return
 	}
 
-	// Deliver the push
 	if err := prov.Push(&provider.PushMessage{
 		Title:    title,
 		Body:     body,
