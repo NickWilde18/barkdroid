@@ -14,7 +14,7 @@ import (
 	"github.com/gogf/gf/v2/os/gcmd"
 )
 
-// Main is the entry command for barkdroid server.
+// Main 是 barkdroid 服务端入口命令。
 var Main = gcmd.Command{
 	Name:  "barkdroid",
 	Usage: "barkdroid",
@@ -25,11 +25,9 @@ var Main = gcmd.Command{
 }
 
 func run(ctx context.Context) error {
-	// --- config ---
 	dbPath := g.Cfg().MustGet(ctx, "db.path", "data/barkdroid.db").String()
 	serverAddr := g.Cfg().MustGet(ctx, "server.address", ":8080").String()
 
-	// --- store ---
 	st, err := store.NewSQLiteStore(dbPath)
 	if err != nil {
 		return fmt.Errorf("init store: %w", err)
@@ -37,7 +35,6 @@ func run(ctx context.Context) error {
 	defer st.Close()
 	log.Printf("[INFO] SQLite store ready at %s", dbPath)
 
-	// --- providers ---
 	providers := make(map[string]provider.Provider)
 
 	if g.Cfg().MustGet(ctx, "jpush.enabled", false).Bool() {
@@ -56,7 +53,6 @@ func run(ctx context.Context) error {
 		log.Println("[INFO] Bark forward provider enabled")
 	}
 
-	// --- routes ---
 	ctrl := pushctrl.New(st, providers)
 
 	s := g.Server()
