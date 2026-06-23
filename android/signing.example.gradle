@@ -1,0 +1,19 @@
+// Copy this file to signing.gradle and fill in your keystore details.
+// Then reference it from app/build.gradle.kts:
+//   apply(from = "../signing.gradle")
+
+android {
+    signingConfigs {
+        create("release") {
+            storeFile = file("../barkdroid.keystore")
+            storePassword = "your_keystore_password"
+            keyAlias = "barkdroid"
+            keyPassword = "your_key_password"
+        }
+    }
+    buildTypes {
+        getByName("release") {
+            signingConfig = signingConfigs.getByName("release")
+        }
+    }
+}

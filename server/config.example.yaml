@@ -1,0 +1,23 @@
+# barkdroid server config
+# Copy this file to config.yaml and fill in your credentials.
+# config.yaml is git-ignored — it contains secrets.
+
+server:
+  address: ":8080"          # HTTP listen address
+
+db:
+  path: "data/barkdroid.db" # SQLite database file path
+
+# --- Push providers ---
+# Enable and configure at least one.
+
+jpush:
+  enabled: false            # Set to true to enable JPush
+  app_key: ""               # JPush AppKey (from JPush console)
+  master_secret: ""         # JPush Master Secret (KEEP THIS SECRET — server-side only)
+
+# Optional: forward pushes to an iOS Bark device
+bark:
+  enabled: false
+  base_url: "https://api.day.app"  # Bark server URL (self-hosted or official)
+  key: ""                           # Bark device key

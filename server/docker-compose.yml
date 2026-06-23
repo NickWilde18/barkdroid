@@ -1,0 +1,12 @@
+services:
+  barkdroid:
+    build: .
+    container_name: barkdroid
+    ports:
+      - "8080:8080"
+    volumes:
+      # Mount your config file
+      - ./config.yaml:/app/config.yaml:ro
+      # Persist the database
+      - ./data:/app/data
+    restart: unless-stopped
