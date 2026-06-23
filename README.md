@@ -87,3 +87,5 @@ JPush has a free tier that includes plenty of pushes for personal/self-hosted us
 ## License
 
 [MIT](LICENSE)
+
+> Built with Go + GoFrame · Android Kotlin/Compose · JPush
